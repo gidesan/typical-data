@@ -30,6 +30,11 @@ interface EntityStore<
   createList: Factory['buildList'];
   reset(): Array<Entity>;
   all(): Array<Entity>;
+  delete(predicate: (entity: Entity) => boolean): Array<Entity>;
+  update(
+    predicate: (entity: any) => boolean,
+    updateFn: (entity: any) => any
+  ): Array<Entity>;
 }
 
 interface ParentEntityStore<
@@ -108,6 +113,15 @@ export function createDatabase<
         all() {
           return [...entities];
         },
+        delete(predicate: (entity: any) => boolean) {
+          return deleteMutation(entities, predicate);
+        },
+        update(
+          predicate: (entity: any) => boolean,
+          updateFn: (entity: any) => any
+        ) {
+          return updateMutation(entities, predicate, updateFn);
+        },
       });
       database[key] = store;
     } else if (typeof item === 'object') {
@@ -120,6 +134,15 @@ export function createDatabase<
         },
         all() {
           return [...entities];
+        },
+        delete(predicate: (entity: any) => boolean) {
+          return deleteMutation(entities, predicate);
+        },
+        update(
+          predicate: (entity: any) => boolean,
+          updateFn: (entity: any) => any
+        ) {
+          return updateMutation(entities, predicate, updateFn);
         },
       });
 
@@ -165,4 +188,31 @@ function isFactory(arg: any): arg is EntityFactory<any, any, any> {
     typeof factory.buildList === 'function' &&
     typeof factory.rewindSequence === 'function'
   );
+}
+
+function deleteMutation<T>(arr: T[], predicate: (entity: T) => boolean) {
+  const removedElements = [];
+  for (let i = 0; i < arr.length; i++) {
+    if (predicate(arr[i])) {
+      removedElements.push(arr.splice(i, 1));
+      i--; // Decrement the index to account for the removed element
+    }
+  }
+  return removedElements;
+}
+
+function updateMutation<T>(
+  arr: T[],
+  predicate: (entity: T) => boolean,
+  updateFn: (entity: T) => T
+) {
+  const updatedElements = [];
+  for (let i = 0; i < arr.length; i++) {
+    if (predicate(arr[i])) {
+      const updatedElement = updateFn(arr[i]);
+      updatedElements.push(updatedElement);
+      arr[i] = updatedElement;
+    }
+  }
+  return updatedElements;
 }

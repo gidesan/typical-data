@@ -262,4 +262,31 @@ describe('entity store', () => {
       expect(db.users).toHaveLength(0);
     });
   });
+
+  describe('delete', () => {
+    it('delete entities given a predicate', () => {
+      db.users.createList(4);
+      db.users.createList(3, { name: 'John' });
+      expect(db.users).toHaveLength(7);
+
+      const deletedUsers = db.users.delete((user) => user.name === 'John');
+      expect(deletedUsers).toHaveLength(3);
+      expect(db.users).toHaveLength(4);
+    });
+  });
+
+  describe('update', () => {
+    it('update entities given a predicate', () => {
+      db.users.createList(4);
+      db.users.createList(3, { name: 'John' });
+      expect(db.users).toHaveLength(7);
+
+      const updatedUsers = db.users.update(
+        (user) => user.name === 'John',
+        (user) => ({ ...user, name: 'Mike' })
+      );
+      expect(updatedUsers).toHaveLength(3);
+      expect(db.users).toHaveLength(7);
+    });
+  });
 });
